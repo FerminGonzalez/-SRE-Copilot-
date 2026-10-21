@@ -49,15 +49,15 @@ jobs:
         working-directory: ${{ matrix.component }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.component }}/node_modules
           key: ${{ runner.os }}-node-${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload lint output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lint-${{ matrix.component }}
           path: ${{ matrix.component }}/lint-output.txt
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload typecheck output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: typecheck-${{ matrix.component }}
           path: ${{ matrix.component }}/typecheck-output.txt
@@ -116,15 +116,15 @@ jobs:
         working-directory: ${{ matrix.component }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.component }}/node_modules
           key: ${{ runner.os }}-node-${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}
@@ -147,7 +147,7 @@ jobs:
 
       - name: Upload test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-${{ matrix.component }}
           path: ${{ matrix.component }}/test-output.txt
@@ -162,16 +162,16 @@ jobs:
         working-directory: infrastructure
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform ${{ env.TERRAFORM_VERSION }}
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
       - name: Cache providers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: infrastructure/.terraform/providers
           key: tf-${{ runner.os }}-${{ hashFiles('infrastructure/.terraform.lock.hcl') }}
