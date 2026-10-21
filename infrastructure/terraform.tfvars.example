@@ -1,0 +1,55 @@
+# ============================================
+# SRE Copilot - ejemplo de variables de Terraform
+#
+# Copia este fichero a `terraform.tfvars` (NO se versiona, está en .gitignore)
+# y ajusta los valores. Los valores de ejemplo están marcados como tales.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# Los secretos NO van aquí: pásalos por variable de entorno para que no
+# acaben en ningún fichero.
+#
+#   export TF_VAR_github_token="..."
+#   export TF_VAR_dynatrace_api_token="..."
+# ============================================
+
+# ---------- Generales ----------
+project     = "srecopilot"
+environment = "dev"    # dev | staging | prod
+location    = "eastus" # p. ej. eastus, eastus2, westeurope
+
+# Sufijo opcional para los recursos con nombre global (Azure OpenAI, AI Search
+# y Static Web App). Déjalo vacío salvo que el nombre ya esté ocupado.
+name_suffix = ""
+
+# ---------- LLM (Azure OpenAI) ----------
+llm_provider              = "azure-openai" # azure-openai | anthropic | mock
+openai_deployment_name     = "gpt-4o"       # valor de AZURE_OPENAI_DEPLOYMENT
+openai_model_name         = "gpt-4o"
+openai_model_version      = "2024-08-06"
+openai_deployment_capacity = 30             # miles de TPM
+
+# ---------- Memoria de incidentes (Azure AI Search) ----------
+search_index_name = "incidents" # debe coincidir con el "name" de search-index.json
+search_sku        = "standard"  # free | basic | standard | standard2 | standard3
+
+# ---------- GitHub ----------
+github_repo = "FerminGonzalez/SRE-Copilot" # formato owner/repo (vacío = desactivado)
+
+# ---------- Dynatrace ----------
+dynatrace_api_url = "https://EXAMPLE-ID.playground.dynatrace.com" # vacío = desactivado
+
+# ---------- Observabilidad ----------
+log_retention_in_days            = 30  # retención del Log Analytics Workspace
+log_daily_quota_gb               = 1   # cuota diaria de ingesta (GB) para controlar el coste
+app_insights_sampling_percentage = 100 # 100 = sin sampling (el copilot cuenta excepciones)
+
+# ---------- SECRETOS ----------
+# NO los escribas aquí: el estado de Terraform es un fichero sensible y
+# terraform.tfvars está en .gitignore. Usa variables de entorno:
+#
+#   export TF_VAR_github_token="ghp_xxx"        # PAT o token de la App de GitHub
+#   export TF_VAR_dynatrace_api_token="dt0c01.xxx"
+#
+# github_token       = "PEY-FICTICIO-no-lo-uses"
+# dynatrace_api_token = "PEY-FICTICIO-no-lo-uses"

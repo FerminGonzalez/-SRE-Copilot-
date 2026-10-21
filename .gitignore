@@ -1,0 +1,97 @@
+# ============================================
+# SRE Copilot - .gitignore
+# Regla de oro: el estado de Terraform, los binarios de los providers y los
+# secretos NUNCA se versionan.
+# ============================================
+
+# ---------- Terraform ----------
+# Binarios de los providers (~228 MB en infrastructure/.terraform)
+.terraform/
+.terraform.tfstate.lock.info
+# Estado: contiene secretos en claro, es un fichero sensible
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfplan
+*.tfplan.*
+tfplan
+plan.out
+# Credenciales y variables con secretos (solo se versiona el .example)
+*.tfvars
+*.tfvars.json
+terraform.tfvars
+!terraform.tfvars.example
+!*.tfvars.example
+
+# ---------- Node / npm ----------
+node_modules/
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+pnpm-debug.log*
+.npm/
+
+# ---------- Python ----------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+
+# ---------- Secretos y entorno ----------
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+!secrets/*.example
+
+# ---------- Logs ----------
+*.log
+logs/
+
+# ---------- Sistema operativo ----------
+.DS_Store
+Thumbs.db
+Desktop.ini
+.AppleDouble
+._*
+.Spotlight-V100
+.Trashes
+
+# ---------- Editores / IDE ----------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.vs/
+*.swp
+*.swo
+*~
+
+# ---------- Azure / otros ----------
+.azure/
+.terraformrc
+terraform.rc
+__MACOSX/

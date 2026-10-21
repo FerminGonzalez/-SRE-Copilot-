@@ -1,0 +1,87 @@
+# ============================================
+# SRE Copilot - Dependabot
+# Actualizaciones automáticas de dependencias:
+#   - npm en los tres componentes (backend, copilot-function, frontend)
+#   - GitHub Actions (workflows y actions usadas)
+#   - Docker (imágenes base de los contenedores, cuando exista un Dockerfile)
+# ============================================
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - backend
+    groups:
+      npm-backend:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /copilot-function
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - copilot-function
+    groups:
+      npm-copilot-function:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - frontend
+    groups:
+      npm-frontend:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    labels:
+      - dependencies
+      - ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    labels:
+      - dependencies
+      - docker

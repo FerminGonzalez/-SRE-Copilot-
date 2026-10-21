@@ -1,0 +1,146 @@
+/*
+ * SRE Copilot · Sistema de tokens
+ * ---------------------------------------------------------------------------
+ * Paleta base de la casa (Azure / observabilidad):
+ *   navy  #0E2841 · teal #156082 · orange #E97132 · green #196B24 · grey #E8E8E8
+ * Todo el color del dashboard sale de aquí; no hay valores sueltos en el CSS
+ * de componentes.
+ */
+
+:root {
+  /* --- Paleta de marca ------------------------------------------------- */
+  --navy: #0e2841;
+  --teal: #156082;
+  --orange: #e97132;
+  --green: #196b24;
+  --grey: #e8e8e8;
+
+  /* --- Rampa navy (fondos) --------------------------------------------- */
+  --navy-950: #050d16;
+  --navy-900: #081725;
+  --navy-850: #0a1c2d;
+  --navy-800: #0e2841;
+  --navy-700: #123350;
+  --navy-600: #174463;
+  --navy-500: #1e577c;
+  --navy-400: #2b6b95;
+
+  /* --- Rampa teal (acento) --------------------------------------------- */
+  --teal-700: #0f4661;
+  --teal-600: #156082;
+  --teal-500: #1e7ba6;
+  --teal-400: #35a0c9;
+  --teal-300: #6fc8e8;
+  --teal-200: #a8e0f3;
+
+  /* --- Rampa orange (avisos) ------------------------------------------- */
+  --orange-700: #9c4618;
+  --orange-600: #c85a20;
+  --orange-500: #e97132;
+  --orange-400: #f5883f;
+  --orange-300: #ffa76b;
+
+  /* --- Rampa green (éxito) --------------------------------------------- */
+  --green-700: #114a19;
+  --green-600: #196b24;
+  --green-500: #22a334;
+  --green-400: #4cd260;
+  --green-300: #8ae59a;
+
+  /* --- Rampa gris (texto y bordes) ------------------------------------- */
+  --grey-100: #e8e8e8;
+  --grey-200: #d2dbe2;
+  --grey-300: #b4c3ce;
+  --grey-400: #94a7b5;
+  --grey-500: #7c93a6;
+  --grey-600: #5d7183;
+  --grey-700: #3a4c5c;
+
+  /* --- Superficies ----------------------------------------------------- */
+  --bg-app: var(--navy-950);
+  --bg-sidebar: var(--navy-900);
+  --bg-surface: var(--navy-850);
+  --bg-surface-2: #102a41;
+  --bg-inset: #06131f;
+  --bg-elevated: #132f47;
+  --bg-hover: rgba(53, 160, 201, 0.09);
+  --bg-active: rgba(53, 160, 201, 0.16);
+
+  /* --- Bordes ----------------------------------------------------------- */
+  --border: #1c4467;
+  --border-subtle: rgba(111, 200, 232, 0.14);
+  --border-strong: #2a5e88;
+
+  /* --- Texto ------------------------------------------------------------ */
+  --text-primary: #e9f0f6;
+  --text-secondary: #a9c0d2;
+  --text-muted: #8aa3b5;
+  --text-dim: #6b8296;
+  --text-inverse: #05101b;
+
+  /* --- Acentos semánticos ---------------------------------------------- */
+  --accent: var(--teal-400);
+  --accent-strong: var(--teal-300);
+  --accent-soft: rgba(53, 160, 201, 0.14);
+  --focus-ring: #7fd1f5;
+  --danger: #ff7a59;
+  --danger-soft: rgba(255, 122, 89, 0.13);
+  --warning: var(--orange-400);
+  --warning-soft: rgba(245, 136, 63, 0.13);
+  --success: var(--green-400);
+  --success-soft: rgba(76, 210, 96, 0.13);
+
+  /* --- Severidad del timeline ------------------------------------------ */
+  --sev-info: var(--teal-400);
+  --sev-warning: var(--orange-400);
+  --sev-error: #ff7a59;
+  --sev-critical: #ff5c5c;
+
+  /* --- Tipografía ------------------------------------------------------- */
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --fs-2xs: 0.6875rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-base: 0.9375rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.875rem;
+
+  /* --- Espaciado (escala de 4px) --------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+
+  /* --- Radios y sombras ------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 32px rgba(0, 0, 0, 0.36);
+  --shadow-raised: 0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 18px 46px rgba(0, 0, 0, 0.45);
+  --shadow-focus: 0 0 0 3px rgba(127, 209, 245, 0.35);
+
+  /* --- Movimiento -------------------------------------------------------- */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+
+  /* --- Layout ------------------------------------------------------------ */
+  --sidebar-w: 250px;
+  --topbar-h: 60px;
+  --content-max: 1240px;
+}

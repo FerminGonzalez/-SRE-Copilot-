@@ -1,0 +1,75 @@
+{
+  "name": "incidents",
+  "fields": [
+    {
+      "name": "id",
+      "type": "Edm.String",
+      "key": true,
+      "searchable": true,
+      "filterable": true,
+      "sortable": true
+    },
+    {
+      "name": "service",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true,
+      "sortable": true
+    },
+    {
+      "name": "generatedAt",
+      "type": "Edm.DateTime",
+      "searchable": true,
+      "filterable": true,
+      "sortable": true
+    },
+    {
+      "name": "summary",
+      "type": "Edm.String",
+      "searchable": true
+    },
+    {
+      "name": "rootCause",
+      "type": "Edm.String",
+      "searchable": true
+    },
+    {
+      "name": "confidence",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true
+    },
+    {
+      "name": "feedback",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true
+    },
+    {
+      "name": "tags",
+      "type": "Collection(Edm.String)",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true
+    },
+    {
+      "name": "content",
+      "type": "Edm.String",
+      "searchable": true
+    }
+  ],
+  "suggesters": [],
+  "scoringProfiles": [
+    {
+      "name": "default",
+      "text": {
+        "queryNormalization": "none",
+        "searchableFields": ["summary", "rootCause", "content"]
+      },
+      "functions": []
+    }
+  ]
+}

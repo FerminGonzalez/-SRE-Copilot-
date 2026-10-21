@@ -1,0 +1,147 @@
+/*
+ * SRE Copilot · Base
+ * Reset ligero, tipografía, fondo de consola y utilidades accesibles.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  /* Halo sutil en la esquina superior izquierda: da profundidad de "consola". */
+  background-image: radial-gradient(
+      1100px 620px at 8% -12%,
+      rgba(21, 96, 130, 0.32),
+      transparent 62%
+    ),
+    radial-gradient(900px 500px at 102% 0%, rgba(233, 113, 50, 0.1), transparent 58%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure,
+fieldset {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent-strong);
+  text-decoration-color: rgba(111, 200, 232, 0.4);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--teal-200);
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* --- Foco visible en todos los elementos interactivos ------------------- */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* --- Utilidades --------------------------------------------------------- */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* --- Preferencia del sistema: menos movimiento -------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Barra de desplazamiento discreta ----------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-600) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--navy-600);
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--navy-500);
+  background-clip: content-box;
+}

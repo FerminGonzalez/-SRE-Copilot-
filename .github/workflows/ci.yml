@@ -1,0 +1,188 @@
+# ============================================
+# SRE Copilot - CI
+# Lint + typecheck + tests de los tres componentes y fmt/validate de Terraform
+#
+# SECRETOS REQUERIDOS: NINGUNO.
+# La CI no habla con Azure: sólo valida el código y la IaC.
+#
+# Notas:
+#   - Node 22 (el backend exige >= 22, copilot-function y frontend >= 20).
+#   - Se usa `npm ci` cuando el componente tiene package-lock.json versionado;
+#     si no lo tiene, se recurre a `npm install` (con aviso en el log) para no
+#     romper la CI antes de que existan los lockfiles.
+#   - La caché de node_modules se keya sobre package.json, así que funciona
+#     haya o no lockfile.
+# ============================================
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  TERRAFORM_VERSION: "1.16.5"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & typecheck (${{ matrix.component }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - backend
+          - copilot-function
+          - frontend
+    defaults:
+      run:
+        working-directory: ${{ matrix.component }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.component }}/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.component }}-
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "::warning::${{ matrix.component }} no tiene package-lock.json: se usa npm install"
+            npm install
+          fi
+
+      - name: Lint
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee lint-output.txt
+
+      - name: Typecheck
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee typecheck-output.txt
+
+      - name: Upload lint output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-${{ matrix.component }}
+          path: ${{ matrix.component }}/lint-output.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload typecheck output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-${{ matrix.component }}
+          path: ${{ matrix.component }}/typecheck-output.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+  test:
+    name: Tests (${{ matrix.component }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - backend
+          - copilot-function
+          - frontend
+    defaults:
+      run:
+        working-directory: ${{ matrix.component }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.component }}/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.component }}-
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "::warning::${{ matrix.component }} no tiene package-lock.json: se usa npm install"
+            npm install
+          fi
+
+      - name: Test
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.txt
+
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-${{ matrix.component }}
+          path: ${{ matrix.component }}/test-output.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+  terraform:
+    name: Terraform (fmt & validate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform ${{ env.TERRAFORM_VERSION }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Cache providers
+        uses: actions/cache@v4
+        with:
+          path: infrastructure/.terraform/providers
+          key: tf-${{ runner.os }}-${{ hashFiles('infrastructure/.terraform.lock.hcl') }}
+          restore-keys: |
+            tf-${{ runner.os }}-
+
+      - name: Formato
+        run: terraform fmt -check -recursive .
+
+      - name: "Init (sin backend: en la CI no hay estado que leer)"
+        run: terraform init -backend=false -input=false
+
+      - name: Validate
+        run: terraform validate -no-color

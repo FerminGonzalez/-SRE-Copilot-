@@ -1,0 +1,324 @@
+/*
+ * SRE Copilot · Layout (shell, barra lateral, barra superior)
+ */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* --- Barra lateral ------------------------------------------------------ */
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  height: 100vh;
+  padding: var(--sp-5) var(--sp-4);
+  overflow-y: auto;
+  background: linear-gradient(
+    180deg,
+    var(--navy-900) 0%,
+    var(--navy-950) 100%
+  );
+  border-right: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.brand__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--navy-950);
+  background: linear-gradient(140deg, var(--teal-300), var(--teal-600));
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px rgba(111, 200, 232, 0.35),
+    0 8px 20px rgba(21, 96, 130, 0.45);
+}
+
+.brand__name {
+  display: block;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.brand__tagline {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.nav__heading {
+  padding: 0 var(--sp-2) var(--sp-2);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.nav__item {
+  position: relative;
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.nav__item:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.nav__item[aria-current="page"] {
+  color: var(--text-primary);
+  background: linear-gradient(
+    90deg,
+    rgba(21, 96, 130, 0.45),
+    rgba(21, 96, 130, 0.06) 70%
+  );
+  border-color: var(--border-subtle);
+}
+
+.nav__item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: -1px;
+  width: 3px;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+}
+
+.nav__icon {
+  flex: none;
+  color: var(--text-dim);
+}
+
+.nav__item[aria-current="page"] .nav__icon {
+  color: var(--accent-strong);
+}
+
+.nav__badge {
+  margin-left: auto;
+  padding: 1px var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--teal-200);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+}
+
+.sidebar__footer {
+  margin-top: auto;
+  padding: var(--sp-3);
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.sidebar__footer dl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+.sidebar__footer dt {
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sidebar__footer dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* --- Columna principal --------------------------------------------------- */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--topbar-h);
+  padding: var(--sp-3) var(--sp-6);
+  background: rgba(8, 23, 37, 0.82);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.topbar__lead {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.topbar__title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.topbar__subtitle {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.topbar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.topbar__url {
+  display: inline-flex;
+  gap: var(--sp-2);
+  align-items: center;
+  max-width: 340px;
+  padding: var(--sp-1) var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.topbar__url span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--sp-6);
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.view__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.view__title {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.view__description {
+  max-width: 68ch;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* --- Adaptación a pantallas estrechas ------------------------------------ */
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    gap: var(--sp-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .nav__heading,
+  .sidebar__footer {
+    display: none;
+  }
+
+  .nav__item[aria-current="page"]::before {
+    top: auto;
+    right: 20%;
+    bottom: -1px;
+    left: 20%;
+    width: auto;
+    height: 3px;
+  }
+
+  .content {
+    padding: var(--sp-4);
+  }
+
+  .topbar {
+    padding: var(--sp-3) var(--sp-4);
+  }
+}

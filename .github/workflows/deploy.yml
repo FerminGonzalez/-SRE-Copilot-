@@ -1,0 +1,342 @@
+# ============================================
+# SRE Copilot - Deploy
+# Aplica Terraform, publica backend + copilot-function + frontend y registra el
+# customEvent "Deploy" en Application Insights.
+#
+# El customEvent es CRÍTICO: el copilot correlaciona los incidentes con los
+# deploys a través de este evento (ver README.md → "Consultas KQL clave"):
+#
+#   customEvents
+#   | where name == "Deploy"
+#   | top 1 by timestamp desc
+#   | project commit_sha = tostring(customDimensions.commitSha), deployedAt = timestamp
+#
+# Se emiten las dimensiones commitSha (la que usa el KQL del README),
+# commit_sha (la que expone la herramienta query_custom_events del contrato),
+# version y deployedAt.
+#
+# SECRETOS REQUERIDOS (Settings → Secrets and variables → Actions):
+#   AZURE_CREDENTIALS               → JSON del service principal (azure/login)
+#   AZURE_PUBLISH_PROFILE_API       → publish profile del App Service del backend
+#   AZURE_PUBLISH_PROFILE_COPILOT   → publish profile de la Function App
+#   AZURE_STATIC_WEB_APPS_API_TOKEN → token de deployment de la Static Web App
+#   APPINSIGHTS_CONNECTION_STRING   → connection string de App Insights
+#                                     (o, en su defecto, APPINSIGHTS_KEY + APPINSIGHTS_URL)
+#   GITHUB_PAT                      → token de GitHub del copilot (TF_VAR_github_token)
+#   DYNAUTRACE_API_TOKEN            → token de Dynatrace (TF_VAR_dynatrace_api_token)
+#   TF_BACKEND_CONFIG_B64           → (opcional) backend remoto de Terraform en base64;
+#                                     sin él se usa el estado local, que NO sirve para CI
+# ============================================
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Sufijo de la versión publicada (por defecto el número de run)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  TERRAFORM_VERSION: "1.16.5"
+
+jobs:
+  terraform:
+    name: Terraform (apply)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure
+    outputs:
+      api_app_name: ${{ steps.tf_outputs.outputs.api_app_name }}
+      function_app_name: ${{ steps.tf_outputs.outputs.function_app_name }}
+      static_web_app_name: ${{ steps.tf_outputs.outputs.static_web_app_name }}
+      copilot_api_base_url: ${{ steps.tf_outputs.outputs.copilot_api_base_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform ${{ env.TERRAFORM_VERSION }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Init
+        run: |
+          if [ -n "${TF_BACKEND_CONFIG_B64:-}" ]; then
+            echo "${TF_BACKEND_CONFIG_B64}" | base64 -d > .backend.hcl
+            terraform init -backend-config=.backend.hcl -input=false
+          else
+            echo "::warning::Sin TF_BACKEND_CONFIG_B64 se usa el estado local: el estado NUNCA debe vivir en el runner"
+            terraform init -input=false
+          fi
+        env:
+          TF_BACKEND_CONFIG_B64: ${{ secrets.TF_BACKEND_CONFIG_B64 }}
+
+      - name: Plan
+        run: terraform plan -input=false -no-color -out=tfplan
+        env:
+          TF_VAR_github_token: ${{ secrets.GITHUB_PAT }}
+          TF_VAR_dynatrace_api_token: ${{ secrets.DYNAUTRACE_API_TOKEN }}
+
+      - name: Apply
+        run: terraform apply -input=false -auto-approve tfplan
+        env:
+          TF_VAR_github_token: ${{ secrets.GITHUB_PAT }}
+          TF_VAR_dynatrace_api_token: ${{ secrets.DYNAUTRACE_API_TOKEN }}
+
+      - name: Outputs
+        id: tf_outputs
+        run: |
+          {
+            echo "api_app_name=$(terraform output -raw api_app_name)"
+            echo "function_app_name=$(terraform output -raw function_app_name)"
+            echo "static_web_app_name=$(terraform output -raw static_web_app_name)"
+            echo "copilot_api_base_url=$(terraform output -raw copilot_api_base_url)"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.component }})
+    needs: terraform
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - backend
+          - copilot-function
+    defaults:
+      run:
+        working-directory: ${{ matrix.component }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.component }}/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.component }}-
+
+      - name: Install dependencies (build)
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "::warning::${{ matrix.component }} no tiene package-lock.json: se usa npm install"
+            npm install
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Install dependencies (producción)
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --omit=dev
+          else
+            npm install --omit=dev
+          fi
+
+      - name: Package
+        run: |
+          # El runtime de Azure NO instala dependencias: el zip lleva
+          # dist/ + node_modules/ (producción) + package.json en la raíz.
+          zip -r "${{ matrix.component }}.zip" dist node_modules package.json -x "*.map"
+          if [ -f host.json ]; then
+            zip -r "${{ matrix.component }}.zip" host.json
+          fi
+          ls -lh "${{ matrix.component }}.zip"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.component }}
+          path: ${{ matrix.component }}/${{ matrix.component }}.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-backend:
+    name: Publish backend (App Service)
+    needs: [terraform, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: build-backend
+          path: package
+
+      - name: Deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ needs.terraform.outputs.api_app_name }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_API }}
+          package: package/backend.zip
+
+  publish-copilot:
+    name: Publish copilot-function (Function App)
+    needs: [terraform, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: build-copilot-function
+          path: package
+
+      - name: Deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ needs.terraform.outputs.function_app_name }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_COPILOT }}
+          package: package/copilot-function.zip
+
+      - name: Smoke test (no bloquea el deploy)
+        continue-on-error: true
+        run: |
+          url="https://${{ needs.terraform.outputs.function_app_name }}.azurewebsites.net/api/health"
+          for i in $(seq 1 12); do
+            if curl -fsS --max-time 20 "$url"; then
+              echo "health OK"
+              exit 0
+            fi
+            echo "intento $i: la Function aún no responde (arranque en frío)"
+            sleep 15
+          done
+          echo "::warning::El endpoint /api/health no respondió; la Function puede seguir arrancando"
+
+  publish-frontend:
+    name: Publish frontend (Static Web App)
+    needs: [terraform]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: frontend
+          api_location: ""
+          output_location: dist
+          # La Static Web App compila el frontend aquí (Oryx instala las
+          # dependencias y ejecuta el build command); no hace falta un
+          # artefacto previo. VITE_COPILOT_URL le dice al dashboard dónde
+          # está la API del copilot (sale del output de Terraform).
+          app_build_command: npm run build
+        env:
+          VITE_COPILOT_URL: ${{ needs.terraform.outputs.copilot_api_base_url }}
+
+  deploy-event:
+    name: CustomEvent "Deploy" en Application Insights
+    needs: [publish-backend, publish-copilot, publish-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emitir customEvent
+        env:
+          APPINSIGHTS_CONNECTION_STRING: ${{ secrets.APPINSIGHTS_CONNECTION_STRING }}
+          APPINSIGHTS_KEY: ${{ secrets.APPINSIGHTS_KEY }}
+          APPINSIGHTS_URL: ${{ secrets.APPINSIGHTS_URL }}
+          COMMIT_SHA: ${{ github.sha }}
+          VERSION: ${{ github.run_number }}.${{ github.run_attempt }}
+          COMMITTED_AT: ${{ github.event.head_commit.timestamp }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          iKey=""
+          endpoint=""
+          if [ -n "${APPINSIGHTS_CONNECTION_STRING:-}" ]; then
+            iKey=$(printf '%s' "$APPINSIGHTS_CONNECTION_STRING" | tr ';' '\n' | grep -i '^InstrumentationKey=' | cut -d= -f2- | tr -d '\r' || true)
+            endpoint=$(printf '%s' "$APPINSIGHTS_CONNECTION_STRING" | tr ';' '\n' | grep -i '^IngestionEndpoint=' | cut -d= -f2- | tr -d '\r' || true)
+          fi
+          if [ -z "$iKey" ] && [ -n "${APPINSIGHTS_KEY:-}" ]; then
+            iKey="$APPINSIGHTS_KEY"
+            endpoint="${APPINSIGHTS_URL:-https://dc.services.visualstudio.com}"
+          fi
+          if [ -z "$iKey" ]; then
+            echo "::error::Falta APPINSIGHTS_CONNECTION_STRING (o APPINSIGHTS_KEY): el copilot no podrá correlacionar el deploy"
+            exit 1
+          fi
+          endpoint="${endpoint%/}/v2/track"
+
+          # deployedAt = momento real del despliegue (no el del commit)
+          deployed_at="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          committed_at="${COMMITTED_AT:-}"
+
+          payload=$(jq -n \
+            --arg iKey "$iKey" \
+            --arg time "$deployed_at" \
+            --arg commitSha "$COMMIT_SHA" \
+            --arg commit_sha "$COMMIT_SHA" \
+            --arg version "$VERSION" \
+            --arg deployedAt "$deployed_at" \
+            --arg committedAt "$committed_at" \
+            --arg repository "$REPOSITORY" \
+            --arg runUrl "$RUN_URL" \
+            '[{
+               name: "Deploy",
+               time: $time,
+               iKey: $iKey,
+               tags: { "ai.operation.id": $commitSha, "ai.internal.sdkVersion": "SRE-Copilot-GHA" },
+               data: {
+                 baseType: "EventData",
+                 baseData: {
+                   name: "Deploy",
+                   properties: {
+                     commitSha: $commitSha,
+                     commit_sha: $commit_sha,
+                     version: $version,
+                     deployedAt: $deployedAt,
+                     committedAt: $committedAt,
+                     repository: $repository,
+                     runUrl: $runUrl
+                   }
+                 }
+               }
+             }]')
+
+          echo "Enviando customEvent Deploy a $endpoint"
+          code=$(curl -sS -o /tmp/track-response.txt -w '%{http_code}' \
+            -X POST "$endpoint" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+          echo "HTTP $code"
+          cat /tmp/track-response.txt
+          if [ "$code" != "200" ]; then
+            echo "::error::App Insights rechazó el customEvent (HTTP $code)"
+            exit 1
+          fi

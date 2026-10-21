@@ -1,0 +1,41 @@
+{
+  "name": "copilot-function",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SRE Copilot · Azure Function v4 (Node/TypeScript) · motor de diagnóstico agentic sobre KQL, GitHub y Dynatrace",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "func start",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "lint": "eslint .",
+    "mcp": "node dist/mcp/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.137.0",
+    "@azure/functions": "^4.16.5",
+    "@azure/openai": "1.0.0-beta.13",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@opentelemetry/api": "~1.9.0",
+    "@opentelemetry/resources": "~2.12.0",
+    "@opentelemetry/sdk-trace-node": "~2.12.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.13.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  }
+}

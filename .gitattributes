@@ -1,0 +1,51 @@
+# ============================================
+# SRE Copilot - .gitattributes
+# El repo se edita en Windows y se ejecuta en Linux: normalizamos a LF.
+# ============================================
+
+# Detección automática y fin de línea LF por defecto
+* text=auto eol=lf
+
+# Código y configuración
+*.ts       text eol=lf
+*.tsx      text eol=lf
+*.js       text eol=lf
+*.jsx      text eol=lf
+*.mjs      text eol=lf
+*.cjs      text eol=lf
+*.json     text eol=lf
+*.css      text eol=lf
+*.html     text eol=lf
+*.tf       text eol=lf
+*.tfvars   text eol=lf
+*.hcl      text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.md       text eol=lf
+*.sh       text eol=lf
+*.py       text eol=lf
+*.txt      text eol=lf
+
+# Ficheros de Windows que deben conservar CRLF
+*.bat      text eol=crlf
+*.cmd      text eol=crlf
+*.ps1      text eol=crlf
+
+# Binarios: nunca se normalizan
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.ico      binary
+*.webp     binary
+*.pdf      binary
+*.zip      binary
+*.gz       binary
+*.exe      binary
+*.dll      binary
+*.so       binary
+*.woff     binary
+*.woff2    binary
+*.ttf      binary
+*.mp4      binary
+*.mp3      binary
