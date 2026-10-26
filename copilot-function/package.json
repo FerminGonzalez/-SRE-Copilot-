@@ -20,7 +20,7 @@
     "mcp": "node dist/mcp/server.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.137.0",
+    "@anthropic-ai/sdk": "^1.1.0",
     "@azure/functions": "^4.16.5",
     "@azure/openai": "1.0.0-beta.13",
     "@modelcontextprotocol/sdk": "^1.32.1",
